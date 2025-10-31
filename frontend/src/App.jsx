@@ -4,8 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { WalletProvider } from './context/WalletContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import BuyerDashboard from './pages/BuyerDashboard';
-import SellerDashboard from './pages/SellerDashboard';
+import Dashboard from './pages/Dashboard';
 import RequestDetails from './pages/RequestDetails';
 
 function App() {
@@ -17,8 +16,7 @@ function App() {
           
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/buyer" element={<BuyerDashboard />} />
-            <Route path="/seller" element={<SellerDashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/request/:requestId" element={<RequestDetails />} />
           </Routes>
 

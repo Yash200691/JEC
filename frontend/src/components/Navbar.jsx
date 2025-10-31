@@ -29,11 +29,8 @@ const Navbar = () => {
             <NavLink to="/" active={isActive('/')}>
               Home
             </NavLink>
-            <NavLink to="/buyer" active={isActive('/buyer')}>
-              Buyer
-            </NavLink>
-            <NavLink to="/seller" active={isActive('/seller')}>
-              Seller
+            <NavLink to="/dashboard" active={isActive('/dashboard')}>
+              Dashboard
             </NavLink>
           </div>
 
