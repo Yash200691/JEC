@@ -1,0 +1,9 @@
+{
+  "network": "sepolia",
+  "contractName": "SyntheticDataMarket",
+  "contractAddress": "0xBaa43904BaBEde633760DCdf4e186c0a2C3FB304",
+  "deployer": "0x9CEC305198818D10f5857947D74D74c37D059c34",
+  "initialVerifier": "0x9CEC305198818D10f5857947D74D74c37D059c34",
+  "deploymentDate": "2025-10-31T20:18:03.154Z",
+  "blockNumber": 9532363
+}
