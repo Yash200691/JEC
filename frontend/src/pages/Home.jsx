@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 import { Button, Card } from '../components/UI';
-import { Database, Shield, Zap, Globe, ShoppingBag, Package, ArrowRight } from 'lucide-react';
+import { Database, Shield, Zap, Globe, ShoppingBag, Package, ArrowRight, UploadCloud, Cpu, CheckCircle, Lock, Image, Video, FileText, Music } from 'lucide-react';
 
 const Home = () => {
   const { isConnected } = useWallet();
@@ -17,8 +17,10 @@ const Home = () => {
             <span className="text-primary-600">Synthetic Data Market</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Buy and sell AI-generated datasets with built-in quality verification,
-            escrow protection, and IPFS-backed transparency.
+            Generate high-quality synthetic datasets (image, video, text, audio),
+            automatically verify them by comparing to submitted real data, and
+            publish an immutable QA correlation report stored on-chain and on IPFS —
+            providing tamper-proof proof suitable for sensitive domains like medical research.
           </p>
           
           <div className="flex items-center justify-center gap-4">
@@ -54,24 +56,24 @@ const Home = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <FeatureCard
-            icon={<Database className="h-8 w-8" />}
-            title="Create Request"
-            description="Buyers specify their data needs, budget, and accepted formats"
+            icon={<UploadCloud className="h-8 w-8" />}
+            title="Upload Real Data"
+            description="Buyers upload sample data that defines the request (image, video, text, audio)"
           />
           <FeatureCard
-            icon={<Zap className="h-8 w-8" />}
-            title="AI Generation"
-            description="Sellers use AI models to generate datasets matching requirements"
+            icon={<Cpu className="h-8 w-8" />}
+            title="Generate Synthetic"
+            description="AI models generate synthetic datasets tailored to the request"
           />
           <FeatureCard
-            icon={<Shield className="h-8 w-8" />}
-            title="Quality Verification"
-            description="Automated QA verification with reports stored on IPFS"
+            icon={<CheckCircle className="h-8 w-8" />}
+            title="Verify & QA"
+            description="Automated correlation analysis produces a JSON QA report comparing real vs synthetic"
           />
           <FeatureCard
-            icon={<Globe className="h-8 w-8" />}
-            title="Secure Payment"
-            description="Smart contract escrow ensures fair transactions"
+            icon={<Lock className="h-8 w-8" />}
+            title="Immutable Proof"
+            description="QA reports and proofs are stored on IPFS and recorded on-chain for tamper-proof audits"
           />
         </div>
       </div>
@@ -86,19 +88,42 @@ const Home = () => {
               </h2>
               <ul className="space-y-4">
                 <BenefitItem text="Decentralized marketplace with no intermediaries" />
-                <BenefitItem text="Automated quality verification with IPFS transparency" />
-                <BenefitItem text="Smart contract escrow protection for both parties" />
-                <BenefitItem text="Lightweight on-chain storage for efficiency" />
-                <BenefitItem text="Flexible format support (Audio, CSV, Image, Text, Video)" />
+                <BenefitItem text="Automatic correlation-based QA: we compare real and synthetic samples and emit a detailed JSON report" />
+                <BenefitItem text="QA reports are stored on IPFS and anchored on-chain so results cannot be tampered with" />
+                <BenefitItem text="Smart contract escrow protection for fair payment and dispute resolution" />
+                <BenefitItem text="Supports Image, Video, Textual, and Audio datasets — designed for regulated domains like healthcare" />
               </ul>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <StatCard label="Datasets Sold" value="1,234" />
-              <StatCard label="Active Sellers" value="89" />
-              <StatCard label="Total Volume" value="45 ETH" />
-              <StatCard label="Avg QA Score" value="92/100" />
+              <StatCard label="Datasets Sold" value="0" />
+                <StatCard label="Active Sellers" value="0" />
+                <StatCard label="Total Volume" value="0 ETH" />
+                <StatCard label="Avg QA Score" value="0/100" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Formats supported */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h3 className="text-2xl font-semibold text-center mb-6">Formats we support</h3>
+        <div className="flex items-center justify-center gap-8">
+          <div className="flex flex-col items-center">
+            <Image className="h-8 w-8 text-primary-600 mb-2" />
+            <span className="text-sm">Image</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Video className="h-8 w-8 text-primary-600 mb-2" />
+            <span className="text-sm">Video</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <FileText className="h-8 w-8 text-primary-600 mb-2" />
+            <span className="text-sm">Text</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Music className="h-8 w-8 text-primary-600 mb-2" />
+            <span className="text-sm">Audio</span>
           </div>
         </div>
       </div>
