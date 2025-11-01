@@ -1,11 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap');
+  /* Pixel font utility for headings */
+  .pixel-font {
+    font-family: 'Press Start 2P', monospace;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+  /* Inherit color from context so we can reuse Tailwind color utilities */
+  color: inherit;
+    display: inline-block;
+    font-size: 0.9em; /* slightly smaller than surrounding heading */
+    transform: scaleX(0.92); /* slightly compress horizontally */
+    letter-spacing: -0.02em;
+  }
+
+  /* Brand heading resembling geometric sans (Poppins) */
+  .brand-heading {
+    font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    /* Removed forced color so Tailwind utility classes control heading color */
+    color: inherit;
+  }
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply font-sans antialiased;
+    /* Use Poppins as the default site font (brand font) for non-hero areas */
+    font-family: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* Utility to reset hero section to the site's original base font (Inter) so hero retains special styles */
+.hero-reset {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 @layer utilities {
