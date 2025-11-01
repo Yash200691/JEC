@@ -5,6 +5,7 @@ import { WalletProvider } from './context/WalletContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import History from './pages/History';
 import RequestDetails from './pages/RequestDetails';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/history" element={<History />} />
             <Route path="/request/:requestId" element={<RequestDetails />} />
           </Routes>
 

@@ -19,16 +19,36 @@ class APIService {
   }
 
   /**
-   * Generate a synthetic dataset
+   * Submit buyer's sample data for AI model generation
+   * ENDPOINT 1: Buyer submits sample data
    */
-  async generateDataset(requestId, dataType, sampleCount, description, additionalParams = {}) {
+  async submitRequest(requestId, sampleData, dataType, sampleCount, description) {
+    try {
+      const response = await this.client.post('/api/dataset/submit-request', {
+        requestId,
+        sampleData,
+        dataType,
+        sampleCount,
+        description,
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Generate a synthetic dataset using AI model
+   * ENDPOINT 2: AI model generates dataset
+   */
+  async generateDataset(requestId, dataType, sampleCount, description, sampleData = null) {
     try {
       const response = await this.client.post('/api/dataset/generate', {
         requestId,
         dataType,
         sampleCount,
         description,
-        additionalParams,
+        sampleData,
       });
       return response.data;
     } catch (error) {
@@ -37,14 +57,16 @@ class APIService {
   }
 
   /**
-   * Verify dataset quality
+   * Get QA report from AI model verification
+   * ENDPOINT 3: AI model generates QA report, uploads to IPFS, triggers escrow
    */
-  async verifyDataset(submissionId, datasetReference, requestDescription) {
+  async getReport(submissionId, requestId, datasetReference, originalSampleData = null) {
     try {
-      const response = await this.client.post('/api/dataset/verify', {
+      const response = await this.client.post('/api/dataset/get-report', {
         submissionId,
+        requestId,
         datasetReference,
-        requestDescription,
+        originalSampleData,
       });
       return response.data;
     } catch (error) {
@@ -53,18 +75,11 @@ class APIService {
   }
 
   /**
-   * Complete workflow: generate and verify
+   * Get buyer's request history with results
    */
-  async generateAndVerify(requestId, dataType, sampleCount, description, autoVerify = true, additionalParams = {}) {
+  async getBuyerHistory(buyerAddress) {
     try {
-      const response = await this.client.post('/api/dataset/generate-and-verify', {
-        requestId,
-        dataType,
-        sampleCount,
-        description,
-        autoVerify,
-        additionalParams,
-      });
+      const response = await this.client.get(`/api/dataset/history/${buyerAddress}`);
       return response.data;
     } catch (error) {
       throw this.handleError(error);

@@ -87,7 +87,7 @@ const Home = () => {
               </ul>
             </div>
             
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-4">
               <StatCard label="Requests" value="1,234" />
               <StatCard label="Datasets" value="5,678" />
               <StatCard label="Avg Score" value="92/100" />

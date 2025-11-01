@@ -39,6 +39,9 @@ const Navbar = () => {
             <NavLink to="/dashboard" active={isActive('/dashboard')}>
               Dashboard
             </NavLink>
+            <NavLink to="/history" active={isActive('/history')}>
+              History
+            </NavLink>
           </div>
 
           {/* Wallet Connect */}
