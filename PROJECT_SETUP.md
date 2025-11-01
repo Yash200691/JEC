@@ -278,12 +278,21 @@ The backend automatically uses mock implementations if endpoints aren't configur
 
 ### With Real Services
 
-When you have actual AI model and QA verifier endpoints:
+When you have actual AI model and QA verifier endpoints (three separate URLs):
 
 1. Update backend `.env`:
    ```env
-   AI_MODEL_ENDPOINT=https://your-ai-model.com/generate
-   QA_VERIFIER_ENDPOINT=https://your-qa-service.com/verify
+   # ENDPOINT 1: Sample submission - receives buyer sample data
+   SAMPLE_SUBMISSION_ENDPOINT=https://your-ai-server.com/submit
+   SAMPLE_SUBMISSION_API_KEY=optional_api_key_for_sample_submission
+
+   # ENDPOINT 2: Generation - generates synthetic dataset
+   AI_GENERATION_ENDPOINT=https://your-ai-server.com/generate
+   AI_GENERATION_API_KEY=optional_api_key_for_generation
+
+   # ENDPOINT 3: QA verification - produces QA report
+   QA_REPORT_ENDPOINT=https://your-ai-server.com/verify
+   QA_REPORT_API_KEY=optional_api_key_for_qa
    ```
 
 2. Expected AI model response format:

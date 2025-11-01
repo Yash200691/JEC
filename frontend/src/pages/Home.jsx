@@ -86,10 +86,10 @@ const Home = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-4">
-              <StatCard label="Requests" value="1,234" />
-              <StatCard label="Datasets" value="5,678" />
-              <StatCard label="Avg Score" value="92/100" />
-              <StatCard label="Users" value="456" />
+              <StatCard label="Requests" value="0" />
+              <StatCard label="Datasets" value="0" />
+              <StatCard label="Avg Score" value="0/100" />
+              <StatCard label="Users" value="0" />
             </div>
           </div>
         </div>
