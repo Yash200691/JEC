@@ -70,7 +70,8 @@ const History = () => {
 
   if (!isConnected) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      // add top padding so the fixed navbar doesn't overlap the alert
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
         <Alert type="warning">
           Please connect your wallet to view your history
         </Alert>
@@ -79,7 +80,8 @@ const History = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    // add top padding to avoid overlap with the fixed navbar
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-8">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">

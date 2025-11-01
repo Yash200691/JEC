@@ -100,7 +100,7 @@ const Home = () => {
       {/* Formats supported - carousel of sample images (img4.png..img7.png) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h3 className="text-2xl font-semibold text-center mb-6">Formats we support</h3>
-        <h3 className="text-2xl font-semibold text-center mb-6">Image , Audio , Video , Text </h3>
+        <h3 className="text-2xl font-semibold text-center mb-6">Image , Audio , Tabular , Text </h3>
         <div className="flex items-center justify-center">
           <FormatsCarousel />
         </div>

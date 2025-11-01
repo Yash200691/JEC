@@ -40,8 +40,13 @@ export const WalletProvider = ({ children }) => {
     }
 
     try {
+      // If the user explicitly disconnected, don't auto-reconnect on page load/refresh
+      const disconnectedByUser = localStorage.getItem('wallet:disconnectedByUser');
+      if (disconnectedByUser) return;
+
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
       if (accounts.length > 0) {
+        // Connect silently (will prompt if needed)
         await connectWallet();
       }
     } catch (error) {
@@ -59,6 +64,12 @@ export const WalletProvider = ({ children }) => {
     setIsConnecting(true);
 
     try {
+      // Clear any 'disconnected by user' flag when the user intentionally connects
+      try {
+        localStorage.removeItem('wallet:disconnectedByUser');
+      } catch (e) {
+        /* ignore storage errors */
+      }
       const { address, chainId: connectedChainId } = await blockchainService.connectWallet();
       
       setAccount(address);
@@ -79,6 +90,12 @@ export const WalletProvider = ({ children }) => {
     setChainId(null);
     setBalance('0');
     setIsConnected(false);
+    // Mark that the user intentionally disconnected so we don't auto-reconnect on refresh
+    try {
+      localStorage.setItem('wallet:disconnectedByUser', '1');
+    } catch (e) {
+      /* ignore storage errors */
+    }
     toast.success('Wallet disconnected');
   };
 
@@ -107,6 +124,11 @@ export const WalletProvider = ({ children }) => {
 
   const handleAccountsChanged = (accounts) => {
     if (accounts.length === 0) {
+      // User disconnected via wallet UI or switched to no account
+      // Treat this as an intentional disconnect to avoid auto-reconnect on refresh
+      try {
+        localStorage.setItem('wallet:disconnectedByUser', '1');
+      } catch (e) {}
       disconnectWallet();
     } else if (accounts[0] !== account) {
       setAccount(accounts[0]);
