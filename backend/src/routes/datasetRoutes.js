@@ -7,21 +7,22 @@ import logger from '../utils/logger.js';
 const router = express.Router();
 
 /**
- * POST /api/dataset/generate
- * Generate a synthetic dataset based on request parameters
+ * ENDPOINT 1: POST /api/dataset/submit-request
+ * Buyer submits their sample data to AI model for processing
+ * AI model receives and acknowledges the sample data
  * 
  * Body:
  * {
  *   "requestId": 1,
+ *   "sampleData": "base64_encoded_data or text or JSON",
  *   "dataType": "audio",
  *   "sampleCount": 100,
- *   "description": "Generate audio samples for speech recognition",
- *   "additionalParams": {}
+ *   "description": "Generate audio samples for speech recognition"
  * }
  */
-router.post('/generate', async (req, res) => {
+router.post('/submit-request', async (req, res) => {
   try {
-    const { requestId, dataType, sampleCount, description, additionalParams } = req.body;
+    const { requestId, sampleData, dataType, sampleCount, description } = req.body;
 
     // Validate input
     if (!requestId || !dataType || !sampleCount) {
@@ -31,31 +32,93 @@ router.post('/generate', async (req, res) => {
       });
     }
 
-    logger.info(`Received dataset generation request for requestId: ${requestId}`);
+    logger.info(`Buyer submitted request data for requestId: ${requestId}`);
 
-    // Step 1: Call AI model endpoint to generate dataset
+      // Forward the sample data to the AI team's sample submission endpoint (if configured)
+      try {
+        const aiAck = await aiModelService.submitSampleData({
+          requestId,
+          sampleData,
+          dataType,
+          sampleCount,
+          description,
+        });
+        res.json({
+          success: true,
+          message: 'Sample data received and forwarded to AI model.',
+          data: {
+            requestId,
+            status: 'pending_generation',
+            submittedAt: new Date().toISOString(),
+            aiAcknowledgement: aiAck.data || aiAck,
+          },
+        });
+      } catch (err) {
+        logger.error('Failed to forward sample to AI model:', err.message);
+        // Still respond success for submission receipt but include AI forwarding failure
+        res.status(502).json({
+          success: false,
+          error: 'Failed to forward sample data to AI model',
+          details: err.message,
+        });
+      }
+  } catch (error) {
+    logger.error('Error submitting request data:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * ENDPOINT 2: POST /api/dataset/generate
+ * AI Model generates synthetic dataset based on buyer's sample data
+ * Returns the generated dataset output
+ * 
+ * Body:
+ * {
+ *   "requestId": 1,
+ *   "dataType": "audio",
+ *   "sampleCount": 100,
+ *   "description": "Generate audio samples",
+ *   "sampleData": "buyer's sample data"
+ * }
+ */
+router.post('/generate', async (req, res) => {
+  try {
+    const { requestId, dataType, sampleCount, description, sampleData } = req.body;
+
+    // Validate input
+    if (!requestId || !dataType || !sampleCount) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameters: requestId, dataType, sampleCount',
+      });
+    }
+
+    logger.info(`AI Model generating dataset for requestId: ${requestId}`);
+
+    // Step 1: AI Model analyzes buyer's sample data and generates synthetic dataset
     const generationResult = await aiModelService.generateDataset({
       dataType,
       sampleCount,
       description,
-      additionalParams,
+      sampleData, // Buyer's sample data to guide generation
     });
 
     if (!generationResult.success) {
-      throw new Error('Dataset generation failed');
+      throw new Error('AI Model failed to generate dataset');
     }
 
-    // Step 2: Extract metadata from generated dataset
-    const { metadata } = generationResult.data;
+    // Step 2: Extract generated dataset and metadata
+    const { dataset, metadata } = generationResult.data;
 
-    // Step 3: Generate dataset reference
-    // IMPORTANT: We do NOT upload the dataset to IPFS. The dataset should be stored
-    // off-chain (S3, seller's server, encrypted storage, etc.) and only the reference
-    // (URL, encrypted ID, or access key) is stored on-chain.
+    // Step 3: Create dataset reference (NOT uploaded to IPFS)
+    // Dataset is shown directly on frontend or stored off-chain
     const datasetReference = `dataset_${requestId}_${Date.now()}`;
-    // In production, this should be a real download URL or encrypted reference
 
-    // Step 4: Submit dataset metadata to blockchain (NOT the dataset itself)
+    // Step 4: Submit metadata to blockchain
     const submitResult = await blockchainService.submitDataset(
       requestId,
       metadata.format,
@@ -68,16 +131,17 @@ router.post('/generate', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Dataset generated and submitted to blockchain',
+      message: 'AI Model successfully generated synthetic dataset',
       data: {
         submissionId: submitResult.submissionId,
         transactionHash: submitResult.transactionHash,
+        dataset, // The actual generated dataset to display on frontend
         datasetReference,
         metadata,
       },
     });
   } catch (error) {
-    logger.error('Error in dataset generation:', error);
+    logger.error('Error in AI dataset generation:', error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -86,70 +150,82 @@ router.post('/generate', async (req, res) => {
 });
 
 /**
- * POST /api/dataset/verify
- * Verify dataset quality and submit QA report to blockchain
+ * ENDPOINT 3: POST /api/dataset/get-report
+ * AI Model verifies dataset quality and generates QA report
+ * QA report is uploaded to IPFS and CID is stored on blockchain
+ * Based on the report, escrow logic of the contract works
  * 
  * Body:
  * {
  *   "submissionId": 1,
+ *   "requestId": 1,
  *   "datasetReference": "dataset_123_456",
- *   "requestDescription": "Original request description"
+ *   "originalSampleData": "buyer's original sample data"
  * }
  */
-router.post('/verify', async (req, res) => {
+router.post('/get-report', async (req, res) => {
   try {
-    const { submissionId, datasetReference, requestDescription } = req.body;
+    const { submissionId, requestId, datasetReference, originalSampleData } = req.body;
 
     // Validate input
-    if (!submissionId || !datasetReference) {
+    if (!submissionId || !requestId || !datasetReference) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required parameters: submissionId, datasetReference',
+        error: 'Missing required parameters: submissionId, requestId, datasetReference',
       });
     }
 
-    logger.info(`Received quality verification request for submissionId: ${submissionId}`);
+    logger.info(`AI Model generating QA report for submissionId: ${submissionId}`);
 
     // Step 1: Get submission details from blockchain
     const submission = await blockchainService.getSubmission(submissionId);
+    const request = await blockchainService.getRequest(requestId);
 
-    // Step 2: Verify dataset quality using QA service
+    // Step 2: AI Model compares original sample data with generated synthetic data
+    // This is where the ACTUAL AI MODEL quality verification happens
     const qaResult = await aiModelService.verifyQuality({
       datasetReference,
+      originalSampleData, // Buyer's original sample data
+      syntheticData: submission, // Generated synthetic data
       metadata: {
         format: submission.format,
         fileSize: submission.fileSize,
         sampleCount: submission.sampleCount,
       },
-      requestDescription,
+      requestDescription: request.description,
     });
 
-    // Step 3: Upload ONLY the QA report to IPFS (NOT the dataset)
-    // The QA report contains quality scores, metrics, and verification results
+    // Step 3: Upload QA report to IPFS (ONLY the report, NOT the dataset)
+    // This report contains quality metrics, comparison results, recommendations
+    logger.info('Uploading QA report to IPFS...');
     const qaReportCid = await ipfsService.uploadQAReport(qaResult.report);
+    logger.info(`QA report uploaded to IPFS with CID: ${qaReportCid}`);
 
-    logger.info(`QA report uploaded to IPFS: ${qaReportCid}`);
-
-    // Step 4: Submit verification result to blockchain
+    // Step 4: Submit verification to blockchain with QA report CID
+    // IMPORTANT: Based on qualityScore and approved status, the smart contract
+    // will execute escrow logic (release funds, dispute, etc.)
+    logger.info('Submitting verification to blockchain (triggers escrow logic)...');
     const verifyResult = await blockchainService.verifySubmission(
       submissionId,
-      qaResult.approved,
-      qaResult.qualityScore,
-      qaReportCid
+      qaResult.approved, // If true, escrow releases payment
+      qaResult.qualityScore, // Quality threshold for escrow
+      qaReportCid // Stored on-chain for transparency
     );
 
     res.json({
       success: true,
-      message: 'Quality verification completed and submitted to blockchain',
+      message: 'QA report generated, uploaded to IPFS, and stored on blockchain. Escrow logic executed.',
       data: {
         approved: qaResult.approved,
         qualityScore: qaResult.qualityScore,
-        qaReportCid,
+        qaReportCid, // Use this to fetch report from IPFS
+        qaReport: qaResult.report, // Full report details
         transactionHash: verifyResult.transactionHash,
+        escrowStatus: qaResult.approved ? 'Payment Released' : 'Pending Review',
       },
     });
   } catch (error) {
-    logger.error('Error in dataset verification:', error);
+    logger.error('Error generating QA report:', error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -158,104 +234,73 @@ router.post('/verify', async (req, res) => {
 });
 
 /**
- * POST /api/dataset/generate-and-verify
- * Complete workflow: Generate dataset, submit to blockchain, verify quality, and finalize
- * 
- * Body:
- * {
- *   "requestId": 1,
- *   "dataType": "audio",
- *   "sampleCount": 100,
- *   "description": "Generate audio samples",
- *   "autoVerify": true
- * }
+ * GET /api/dataset/history/:buyerAddress
+ * Get buyer's request history with results
  */
-router.post('/generate-and-verify', async (req, res) => {
+router.get('/history/:buyerAddress', async (req, res) => {
   try {
-    const { requestId, dataType, sampleCount, description, additionalParams, autoVerify } = req.body;
+    const { buyerAddress } = req.params;
+    
+    logger.info(`Fetching history for buyer: ${buyerAddress}`);
 
-    // Validate input
-    if (!requestId || !dataType || !sampleCount) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required parameters: requestId, dataType, sampleCount',
-      });
-    }
-
-    logger.info(`Starting complete workflow for requestId: ${requestId}`);
-
-    // Step 1: Generate dataset
-    logger.info('Step 1: Generating dataset...');
-    const generationResult = await aiModelService.generateDataset({
-      dataType,
-      sampleCount,
-      description,
-      additionalParams,
-    });
-
-    const { metadata } = generationResult.data;
-    // Dataset reference is NOT uploaded to IPFS - it's stored off-chain
-    const datasetReference = `dataset_${requestId}_${Date.now()}`;
-
-    // Step 2: Submit metadata to blockchain (NOT dataset files)
-    logger.info('Step 2: Submitting to blockchain...');
-    const submitResult = await blockchainService.submitDataset(
-      requestId,
-      metadata.format,
-      metadata.fileSize,
-      metadata.sampleCount,
-      metadata.fileExtensions,
-      datasetReference,
-      null
+    // Get all requests by buyer
+    const requestIds = await blockchainService.getBuyerRequests(buyerAddress);
+    
+    // Fetch details for each request including submissions and QA reports
+    const history = await Promise.all(
+      requestIds.map(async (requestId) => {
+        const request = await blockchainService.getRequest(requestId);
+        
+        // Get submission if finalized
+        let submission = null;
+        let qaReport = null;
+        
+        if (request.finalizedSubmissionId && request.finalizedSubmissionId !== '0') {
+          try {
+            submission = await blockchainService.getSubmission(request.finalizedSubmissionId);
+            
+            // Fetch QA report from IPFS if CID exists
+            if (request.qualityReportCid && request.qualityReportCid !== '') {
+              try {
+                qaReport = await ipfsService.getJSON(request.qualityReportCid);
+              } catch (error) {
+                logger.warn(`Could not fetch QA report for request ${requestId}:`, error.message);
+              }
+            }
+          } catch (error) {
+            logger.warn(`Could not fetch submission for request ${requestId}:`, error.message);
+          }
+        }
+        
+        return {
+          requestId: request.id,
+          description: request.description,
+          status: request.status,
+          createdAt: request.createdAt,
+          qualityScore: request.qualityScore,
+          submission: submission ? {
+            submissionId: submission.id,
+            datasetReference: submission.datasetReference,
+            format: submission.format,
+            fileSize: submission.fileSize,
+            sampleCount: submission.sampleCount,
+          } : null,
+          qaReport,
+          qaReportCid: request.qualityReportCid,
+        };
+      })
     );
-
-    const submissionId = submitResult.submissionId;
-
-    // Step 3: Verify quality (if autoVerify is true)
-    let qaReportCid = null;
-    let verifyResult = null;
-    let qaResult = null;
-
-    if (autoVerify) {
-      logger.info('Step 3: Verifying quality...');
-      qaResult = await aiModelService.verifyQuality({
-        datasetReference,
-        metadata,
-        requestDescription: description,
-      });
-
-      // Step 4: Upload QA report to IPFS
-      logger.info('Step 4: Uploading QA report to IPFS (NOT the dataset)...');
-      qaReportCid = await ipfsService.uploadQAReport(qaResult.report);
-
-      // Step 5: Submit verification to blockchain
-      logger.info('Step 5: Submitting verification to blockchain...');
-      verifyResult = await blockchainService.verifySubmission(
-        submissionId,
-        qaResult.approved,
-        qaResult.qualityScore,
-        qaReportCid
-      );
-    }
 
     res.json({
       success: true,
-      message: autoVerify ? 'Dataset generated, verified, and finalized' : 'Dataset generated and submitted',
       data: {
-        submissionId,
-        submitTransactionHash: submitResult.transactionHash,
-        datasetReference,
-        metadata,
-        verification: autoVerify ? {
-          approved: qaResult.approved,
-          qualityScore: qaResult.qualityScore,
-          qaReportCid,
-          verifyTransactionHash: verifyResult.transactionHash,
-        } : null,
+        buyerAddress,
+        totalRequests: history.length,
+        requests: history,
       },
     });
   } catch (error) {
-    logger.error('Error in complete workflow:', error);
+    logger.error('Error fetching buyer history:', error);
     res.status(500).json({
       success: false,
       error: error.message,

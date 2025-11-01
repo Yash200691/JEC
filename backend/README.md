@@ -62,7 +62,9 @@ cp .env.example .env
 | `CONTRACT_ADDRESS` | Deployed contract address | `0x123...` |
 | `IPFS_HOST` | IPFS node host | `127.0.0.1` or `ipfs.infura.io` |
 | `IPFS_PORT` | IPFS node port | `5001` |
-| `AI_MODEL_ENDPOINT` | AI model API endpoint | `http://localhost:8000/generate` |
+| `SAMPLE_SUBMISSION_ENDPOINT` | AI sample submission endpoint (receives buyer sample data) | `http://localhost:8000/submit` |
+| `AI_GENERATION_ENDPOINT` | AI dataset generation endpoint | `http://localhost:8001/generate` |
+| `QA_REPORT_ENDPOINT` | QA report / verification endpoint | `http://localhost:8002/verify` |
 | `PORT` | Server port | `3000` |
 
 ### Contract ABI Setup
@@ -226,11 +228,14 @@ GET /api/dataset/qa-report/:cid
 
 ## Integration with AI Model
 
-When you receive your AI model endpoint, update the following:
+When you receive your AI model endpoints, update the following:
 
-1. Set `AI_MODEL_ENDPOINT` in `.env`
+1. Set the AI endpoint variables in `.env`:
+  - `SAMPLE_SUBMISSION_ENDPOINT` (receives buyer sample data)
+  - `AI_GENERATION_ENDPOINT` (generates synthetic dataset)
+  - `QA_REPORT_ENDPOINT` (verifies dataset and returns QA report)
 2. Update `aiModelService.js` if needed to match the model's API format
-3. The service expects this response structure:
+3. The generation service is expected to return a structure like:
 ```json
 {
   "files": [...],
@@ -304,8 +309,7 @@ ipfs daemon
 1. ✅ Install dependencies: `npm install`
 2. ✅ Configure `.env` file
 3. ⏳ Add contract ABI (after deployment)
-4. ⏳ Update `AI_MODEL_ENDPOINT` (when provided)
-5. ⏳ Update `QA_VERIFIER_ENDPOINT` (when provided)
+4. ⏳ Update `SAMPLE_SUBMISSION_ENDPOINT`, `AI_GENERATION_ENDPOINT` and `QA_REPORT_ENDPOINT` (when provided)
 6. ✅ Start server: `npm start`
 7. ⏳ Test endpoints with Postman or curl
 
